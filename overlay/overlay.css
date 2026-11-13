@@ -1,0 +1,42 @@
+@font-face {
+  font-family: "Cubic 11";
+  src: url("/fonts/Cubic_11.woff2") format("woff2");
+  font-display: swap;
+}
+
+:root {
+  /* Must match the game's dark page, or the browser paints this iframe opaque. */
+  color-scheme: dark;
+  --ink: #14213f;
+  --ice: #bdeff2;
+  --ice-2: #e6fafb;
+  --snow: #ffffff;
+  --red: #d8432f;
+  --gold: #ffd166;
+  --muted: #4a5a7d;
+  --pixel: "Cubic 11", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--pixel);
+  -webkit-font-smoothing: none;
+  user-select: none;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}

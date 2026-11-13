@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Zig-Zag Cipher",
+    "cipher": "IEILVCDNOOG",
+    "key": "3, 由左上開始",
+    "sel": ["ILOVECODING", "GODEVILICON"],
+    "ans": 0
+  },
+  {
+    "name": "Atbash",
+    "cipher": "UVMT XSRZ",
+    "key": "(NO KEY), 對應關係：(A:Z, B:Y, ..., M:N, N:M, ..., Y:B, Z:A)",
+    "sel": ["LOVE CODE", "FENG CHIA"],
+    "ans": 1
+  },
+  {
+    "name": "ROT-13 Cipher",
+    "cipher": "UNPXREFVE",
+    "key": "(NO KEY)",
+    "sel": ["HACKERSIR", "FUNPXRIVR"],
+    "ans": 0
+  },
+  {
+    "name": "Int to letter",
+    "cipher": "5 13 15 20 9 15 14",
+    "key": "(NO KEY), 對應關係：(1:A, 2:B, ..., 26:Z)",
+    "sel": ["FRIENDS", "EMOTION"],
+    "ans": 1
+  }
+]

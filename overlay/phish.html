@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>可疑信件</title>
+    <link rel="stylesheet" href="./overlay.css">
+    <script src="https://play.workadventu.re/iframe_api.js"></script>
+    <style>
+        body {
+            padding: 10px;
+        }
+
+        .frame {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 20px);
+            background: #f6f7fa;
+            color: #1d2433;
+            font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+            box-shadow: 0 0 0 3px var(--ink), 0 0 0 6px var(--snow), 0 0 0 9px var(--ink);
+        }
+
+        .bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: var(--ink);
+            color: var(--snow);
+            font-family: var(--pixel);
+            font-size: 14px;
+        }
+
+        .bar .goal {
+            flex: 1;
+        }
+
+        .bar b {
+            color: var(--gold);
+            font-weight: 400;
+        }
+
+        .bar button {
+            padding: 3px 10px 4px;
+            border: 0;
+            background: var(--red);
+            color: var(--snow);
+            font-family: var(--pixel);
+        }
+
+        .mail {
+            flex: 1;
+            overflow: auto;
+            padding: 16px 20px 20px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .subject {
+            margin: 0 0 10px;
+            font-size: 19px;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .meta {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2px 10px;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #d9dde6;
+            color: #4b5568;
+            font-size: 13px;
+        }
+
+        .meta span:nth-child(odd) {
+            color: #8a93a6;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #2f4f9e;
+            font-weight: 700;
+        }
+
+        .logo i {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            background: #2f4f9e;
+            box-shadow: inset 0 0 0 5px #6f8fdc;
+        }
+
+        .link {
+            display: inline-block;
+            margin: 6px 0 10px;
+            padding: 8px 14px;
+            background: #2f62d6;
+            color: #fff;
+        }
+
+        .attachment {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 6px 10px;
+            border: 1px solid #c9cfdb;
+            background: #fff;
+            font-size: 13px;
+        }
+
+        /* Everything in the mail can be clicked; only some of it is a red flag. */
+        [data-spot] {
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        [data-spot]:hover {
+            outline: 2px dashed #9aa6bd;
+            outline-offset: 2px;
+        }
+
+        [data-spot].hit {
+            outline: 3px solid #d8432f;
+            outline-offset: 2px;
+            background-color: rgb(216 67 47 / .1);
+        }
+
+        .link[data-spot].hit {
+            background-color: #2f62d6;
+        }
+
+        [data-spot].miss {
+            animation: shake 300ms steps(4);
+        }
+
+        @keyframes shake {
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+
+        .hover-url {
+            position: fixed;
+            left: 18px;
+            bottom: 18px;
+            padding: 2px 8px;
+            background: #e8ebf2;
+            border: 1px solid #c3cad8;
+            color: #39445a;
+            font-size: 12px;
+            font-family: ui-monospace, Consolas, monospace;
+        }
+
+        .hover-url[hidden] {
+            display: none;
+        }
+
+        .notes {
+            max-height: 30%;
+            overflow: auto;
+            padding: 8px 12px;
+            background: var(--ink);
+            color: var(--snow);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .notes:empty {
+            display: none;
+        }
+
+        .notes div::before {
+            content: "🚩 ";
+        }
+    </style>
+</head>
+
+<body>
+    <div class="frame">
+        <div class="bar">
+            <span class="goal">點出信裡所有可疑的地方　<b id="count">0</b> / <span id="total">6</span>　點錯 <b id="misses">0</b></span>
+            <button id="done" type="button">我找完了</button>
+        </div>
+
+        <div class="mail" id="mail">
+            <p class="subject"><span data-spot="urgent">【緊急】您的 Office 365 帳號將於 24 小時內永久停用</span></p>
+            <div class="meta">
+                <span>寄件者</span><span><span data-spot="ok-name">逢甲大學 資訊處</span> <span data-spot="sender">&lt;it-support@o365.fcu-edu.tw&gt;</span></span>
+                <span>收件者</span><span data-spot="ok-to">d1234567@o365.fcu.edu.tw</span>
+                <span>日期</span><span data-spot="ok-date">2026/12/08（二）上午 03:12</span>
+            </div>
+
+            <div class="logo" data-spot="ok-logo"><i></i>逢甲大學 Office 365</div>
+
+            <p><span data-spot="greeting">親愛的用戶：</span></p>
+            <p data-spot="ok-body">系統偵測到您的帳號近期有異常登入紀錄。為保護您的資料安全，請於期限內完成帳號重新驗證。</p>
+            <p><span class="link" data-spot="link" data-href="http://o365-fcu.verify-login.co/auth">立即驗證帳號 → login.o365.fcu.edu.tw</span></p>
+            <p><span data-spot="password">若連結無法開啟，也可以直接回覆本信，附上您的學號與密碼，我們將為您手動處理。</span></p>
+            <p data-spot="ok-sign">逢甲大學 資訊處 敬上<br>分機 1234</p>
+            <span class="attachment" data-spot="attachment">📎 帳號驗證說明.pdf.exe　(312 KB)</span>
+        </div>
+
+        <div class="notes" id="notes" aria-live="polite"></div>
+    </div>
+    <div class="hover-url" id="hoverUrl" hidden></div>
+
+    <script>
+        const FLAGS = {
+            sender: '寄件網域是 o365.fcu-edu.tw，長得很像，但學校信箱是 o365.fcu.edu.tw。顯示名稱誰都能亂打，要逐字看真正的網域。',
+            urgent: '「24 小時內永久停用」是在製造恐慌，逼你來不及想就照做。',
+            greeting: '用「親愛的用戶」稱呼你：學校系統知道你是誰，詐騙信才會用通用稱呼。',
+            link: '按鈕上寫的是學校網址，但滑鼠移上去，真正會開的是 verify-login.co。',
+            password: '正式單位永遠不會叫你用信件回傳密碼。',
+            attachment: '「.pdf.exe」其實是執行檔，偽裝成 PDF，打開就會執行程式。',
+        };
+        const found = new Set();
+        let misses = 0;
+        const total = Object.keys(FLAGS).length;
+        document.getElementById('total').textContent = total;
+
+        const hover = document.getElementById('hoverUrl');
+        const link = document.querySelector('[data-spot="link"]');
+        link.addEventListener('mouseenter', () => { hover.textContent = link.dataset.href; hover.hidden = false; });
+        link.addEventListener('mouseleave', () => { hover.hidden = true; });
+
+        const ready = WA.onInit();
+        const doneButton = document.getElementById('done');
+        let finished = false;
+
+        // Saves the result for the office script, then closes this page itself, so the mail
+        // never stays open even if the script misses the result.
+        const finish = async () => {
+            if (finished) return;
+            finished = true;
+            doneButton.disabled = true;
+            doneButton.textContent = '送出中…';
+            try {
+                await ready;
+                await WA.player.state.saveVariable('hsPhish', { found: found.size, total, misses, at: Date.now() }, { public: false, persist: false, scope: 'room' });
+                const pages = await WA.ui.website.getAll();
+                await Promise.all(pages.filter(page => page.url.includes('phish')).map(page => page.close()));
+            } catch (error) {
+                console.error(error);
+                finished = false;
+                doneButton.disabled = false;
+                doneButton.textContent = '再試一次';
+            }
+        };
+
+        document.getElementById('mail').addEventListener('click', event => {
+            const spot = event.target.closest('[data-spot]');
+            if (!spot) return;
+            const id = spot.dataset.spot;
+            if (FLAGS[id]) {
+                if (found.has(id)) return;
+                found.add(id);
+                spot.classList.add('hit');
+                const note = document.createElement('div');
+                note.textContent = FLAGS[id];
+                document.getElementById('notes').append(note);
+                document.getElementById('count').textContent = found.size;
+                if (found.size === total) setTimeout(finish, 1200);
+            } else {
+                misses++;
+                document.getElementById('misses').textContent = misses;
+                spot.classList.remove('miss');
+                void spot.offsetWidth;
+                spot.classList.add('miss');
+            }
+        });
+
+        doneButton.addEventListener('click', finish);
+    </script>
+</body>
+
+</html>
