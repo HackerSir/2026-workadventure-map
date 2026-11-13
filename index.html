@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <meta name="description" content="走進黑客社的雪地小鎮，闖過五道關卡，找到戴紫色帽子的神祕商人換禮物。">
+    <meta name="theme-color" content="#14213f">
+    <title>黑客社資安週 RPG</title>
+    <link rel="icon" href="./images/favicon.svg" type="image/svg+xml">
+    <link rel="preload" href="./fonts/Cubic_11.woff2" as="font" type="font/woff2" crossorigin>
+    <style>
+        @font-face {
+            font-family: "Cubic 11";
+            src: url("fonts/Cubic_11.woff2") format("woff2");
+            font-display: swap;
+        }
+
+        :root {
+            --ink: #14213f;
+            --ink-2: #213460;
+            --ice: #bdeff2;
+            --ice-2: #e6fafb;
+            --snow: #ffffff;
+            --sky: #3f9ad0;
+            --red: #d8432f;
+            --red-dark: #8f2519;
+            --gold: #ffd166;
+            --violet: #7a5cf0;
+            --violet-dark: #241a57;
+            --muted: #4a5a7d;
+            --pixel: "Cubic 11", "PingFang TC", "Microsoft JhengHei", sans-serif;
+            --body: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            background: var(--ice-2);
+            color: var(--ink);
+            font: 400 17px/1.75 var(--body);
+            overflow-x: clip;
+        }
+
+        h1, h2, h3, p {
+            margin: 0;
+        }
+
+        h1, h2, h3, .pixel {
+            font-family: var(--pixel);
+            font-weight: 400;
+            -webkit-font-smoothing: none;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        :focus-visible {
+            outline: 3px solid var(--gold);
+            outline-offset: 3px;
+        }
+
+        .wrap {
+            width: min(1080px, 100% - 32px);
+            margin-inline: auto;
+        }
+
+        /* A window onto map.png: --x, --y, --w and --h are in map pixels. */
+        .sprite {
+            --s: 2;
+            flex: none;
+            width: calc(var(--w) * var(--s) * 1px);
+            height: calc(var(--h) * var(--s) * 1px);
+            background: url("./assets/map-021c3353.png") no-repeat;
+            background-size: calc(3200px * var(--s)) auto;
+            background-position: calc(var(--x) * var(--s) * -1px) calc(var(--y) * var(--s) * -1px);
+            image-rendering: pixelated;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 14px 26px 16px;
+            background: var(--red);
+            color: var(--snow);
+            font: 22px/1.2 var(--pixel);
+            text-decoration: none;
+            box-shadow: 0 0 0 4px var(--ink), 0 8px 0 4px var(--red-dark), 0 8px 0 8px var(--ink);
+            transition: transform 80ms steps(2), box-shadow 80ms steps(2);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 4px var(--ink), 0 10px 0 4px var(--red-dark), 0 10px 0 8px var(--ink);
+        }
+
+        .button:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 4px var(--ink), 0 2px 0 4px var(--red-dark), 0 2px 0 8px var(--ink);
+        }
+
+        /* Hero */
+        .hero {
+            position: relative;
+            isolation: isolate;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 48px;
+            min-height: min(100svh, 860px);
+            padding-block: 28px 32px;
+            overflow: hidden;
+            background: var(--ink);
+            color: var(--snow);
+        }
+
+        .hero-map {
+            position: absolute;
+            z-index: -2;
+            inset: -80px -400px;
+            background: url("./assets/map-021c3353.png") 50% 62% / 3200px auto;
+            image-rendering: pixelated;
+            animation: drift 70s linear infinite alternate;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgb(13 22 52 / .92) 0%, rgb(13 22 52 / .72) 48%, rgb(13 22 52 / .32) 100%),
+                linear-gradient(0deg, rgb(13 22 52 / .75), transparent 40%);
+        }
+
+        #snow {
+            position: absolute;
+            z-index: -1;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            image-rendering: pixelated;
+        }
+
+        @keyframes drift {
+            from { transform: translateX(-180px); }
+            to { transform: translateX(180px); }
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            font-size: 15px;
+        }
+
+        .topbar a {
+            text-underline-offset: 4px;
+        }
+
+        .brand {
+            font: 22px/1 var(--pixel);
+            text-decoration: none;
+        }
+
+        .eyebrow {
+            color: var(--gold);
+            font-size: 22px;
+            line-height: 1.3;
+        }
+
+        h1 {
+            margin-top: 12px;
+            font-size: 88px;
+            line-height: 1.1;
+            text-shadow: 6px 6px 0 var(--ink);
+        }
+
+        .lede {
+            max-width: 30em;
+            margin-top: 20px;
+            font-size: 19px;
+        }
+
+        .hero .button {
+            margin-top: 32px;
+        }
+
+        .dialog {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            max-width: 640px;
+            min-height: 104px;
+            margin: 12px;
+            padding: 12px 20px 12px 12px;
+            background: var(--ice-2);
+            color: var(--ink);
+            box-shadow: 0 0 0 4px var(--ink), 0 0 0 8px var(--snow), 0 0 0 12px var(--ink);
+        }
+
+        .dialog .sprite {
+            background-color: var(--ice);
+        }
+
+        .dialog-name {
+            color: var(--red);
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
+        .dialog-text {
+            font-size: 17px;
+            line-height: 1.5;
+        }
+
+        /* Quests */
+        section {
+            padding-block: 88px;
+        }
+
+        h2 {
+            font-size: 44px;
+            line-height: 1.2;
+        }
+
+        .section-lede {
+            max-width: 34em;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 19px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 28px;
+            margin: 24px 0 0;
+            padding: 0;
+            list-style: none;
+            font-size: 16px;
+        }
+
+        kbd {
+            display: inline-block;
+            min-width: 1.8em;
+            margin-right: 6px;
+            padding: 0 6px;
+            background: var(--snow);
+            font: 15px/1.7 var(--pixel);
+            text-align: center;
+            box-shadow: 0 0 0 2px var(--ink), 0 3px 0 2px var(--ink);
+        }
+
+        .quests {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 36px;
+            margin: 48px 0 0;
+            padding: 4px 12px 12px 4px;
+            list-style: none;
+            counter-reset: quest;
+        }
+
+        .quest {
+            display: flex;
+            flex-direction: column;
+            background: var(--snow);
+            box-shadow: 0 0 0 4px var(--ink), 8px 8px 0 4px var(--sky);
+            counter-increment: quest;
+        }
+
+        .quest-art {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 232px;
+            overflow: hidden;
+            background: var(--ice);
+            border-bottom: 4px solid var(--ink);
+        }
+
+        .quest-body {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 24px 24px 28px;
+        }
+
+        .quest-body::before {
+            content: "QUEST 0" counter(quest);
+            color: var(--red);
+            font: 15px/1.4 var(--pixel);
+        }
+
+        h3 {
+            margin-top: 4px;
+            font-size: 33px;
+            line-height: 1.25;
+        }
+
+        .quest-body p {
+            margin-block: 10px 20px;
+            color: var(--muted);
+        }
+
+        .reward {
+            margin-top: auto;
+            padding: 5px 12px 6px;
+            background: var(--ink);
+            color: var(--gold);
+            font: 15px/1.5 var(--pixel);
+        }
+
+        /* Merchant */
+        .merchant {
+            background: var(--violet-dark);
+            color: var(--snow);
+            border-top: 8px solid var(--violet);
+        }
+
+        .merchant .wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 56px;
+        }
+
+        .merchant .eyebrow {
+            margin-bottom: 8px;
+        }
+
+        .merchant .copy {
+            max-width: 30em;
+            margin-top: 16px;
+            font-size: 19px;
+        }
+
+        .merchant .button {
+            margin-top: 32px;
+        }
+
+        .merchant .sprite {
+            --s: 1.5;
+            margin: 8px;
+            box-shadow: 0 0 0 4px var(--ink), 0 0 0 8px var(--violet);
+        }
+
+        /* Footer */
+        footer {
+            padding-block: 40px;
+            background: var(--ink);
+            color: var(--ice);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        footer .wrap {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 16px 48px;
+        }
+
+        @media (max-width: 860px) {
+            h1 {
+                font-size: 66px;
+            }
+
+            .quests {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .merchant .wrap {
+                flex-direction: column-reverse;
+                align-items: flex-start;
+                gap: 40px;
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                font-size: 16px;
+            }
+
+            h1 {
+                font-size: 44px;
+                text-shadow: 4px 4px 0 var(--ink);
+            }
+
+            h2 {
+                font-size: 33px;
+            }
+
+            h3 {
+                font-size: 22px;
+            }
+
+            section {
+                padding-block: 64px;
+            }
+
+            .lede, .section-lede, .merchant .copy {
+                font-size: 17px;
+            }
+
+            .quest-art {
+                height: 180px;
+            }
+
+            .quest-art .sprite {
+                --s: 1.5;
+            }
+
+            .merchant .sprite {
+                --s: 1.25;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            .hero-map {
+                animation: none;
+            }
+
+            #snow {
+                display: none;
+            }
+
+            .button {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="hero">
+        <div class="hero-map"></div>
+        <canvas id="snow" aria-hidden="true"></canvas>
+
+        <div class="wrap topbar">
+            <a class="brand" href="https://hackersir.org/" title="黑客社網站">HackerSir</a>
+            <a href="#quests">查看任務</a>
+        </div>
+
+        <div class="wrap">
+            <p class="pixel eyebrow">資安週限定 2D 冒險</p>
+            <h1>黑客社<br>資安週 RPG</h1>
+            <p class="lede">走進下著雪的小鎮，闖過五道關卡，再找到戴紫色帽子的神祕商人換禮物。不用安裝，打開瀏覽器就能玩。</p>
+            <a class="button" href="https://town.hackersir.org/">進入小鎮 ▶</a>
+        </div>
+
+        <div class="wrap">
+            <div class="dialog">
+                <div class="sprite" style="--x:732;--y:908;--w:40;--h:48" role="img" aria-label="黑喵喵"></div>
+                <div>
+                    <p class="pixel dialog-name">黑喵喵</p>
+                    <p class="dialog-text" id="catLine">こんにちにゃー！歡迎來到黑客社的虛擬世界</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="quests">
+            <div class="wrap">
+                <h2>任務清單</h2>
+                <p class="section-lede">走到攤位或屋子前就會觸發關卡。每破一關拿一張卡，集滿五張才能兌獎。</p>
+                <ul class="controls">
+                    <li><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd>或 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>移動</li>
+                    <li>也可以直接點地面走過去</li>
+                </ul>
+
+                <ol class="quests">
+                    <li class="quest">
+                        <div class="quest-art">
+                            <div class="sprite" style="--x:880;--y:832;--w:160;--h:112"></div>
+                        </div>
+                        <div class="quest-body">
+                            <h3>翻牌遊戲</h3>
+                            <p>認真玩滿 30 秒再離開。太快走掉的話，系統可不會算你過關。</p>
+                            <span class="reward">獲得：神聖彗星反射力量陷阱卡</span>
+                        </div>
+                    </li>
+                    <li class="quest">
+                        <div class="quest-art">
+                            <div class="sprite" style="--x:1136;--y:640;--w:160;--h:112"></div>
+                        </div>
+                        <div class="quest-body">
+                            <h3>腳捲綿羊牆</h3>
+                            <p>站到牆前好好看一看，至少停留 30 秒，別當下一隻綿羊。</p>
+                            <span class="reward">獲得：腳捲綿羊遊戲卡</span>
+                        </div>
+                    </li>
+                    <li class="quest">
+                        <div class="quest-art">
+                            <div class="sprite" style="--x:1456;--y:640;--w:160;--h:112"></div>
+                        </div>
+                        <div class="quest-body">
+                            <h3>解密客棧</h3>
+                            <p>掌櫃準備了四道古典密碼，全部解開才算過關，答錯就得從頭再來。</p>
+                            <span class="reward">獲得：單字卡</span>
+                        </div>
+                    </li>
+                    <li class="quest">
+                        <div class="quest-art" style="background:var(--snow)">
+                            <div class="sprite" style="--s:1.5;--x:112;--y:576;--w:160;--h:160"></div>
+                        </div>
+                        <div class="quest-body">
+                            <h3>解謎屋</h3>
+                            <p>用走的回答問題，站上答案區就算作答。連續答對三題過關，答錯會被踢出門。</p>
+                            <span class="reward">獲得：好人卡</span>
+                        </div>
+                    </li>
+                    <li class="quest">
+                        <div class="quest-art">
+                            <div class="sprite" style="--x:1712;--y:816;--w:160;--h:112"></div>
+                        </div>
+                        <div class="quest-body">
+                            <h3>辦公室找碴</h3>
+                            <p>走進一間資安習慣很差的辦公室，兩分鐘內找出至少 4 個問題，其中一個藏在一封詐騙信裡。</p>
+                            <span class="reward">獲得：辦公室通行卡</span>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="merchant">
+            <div class="wrap">
+                <div>
+                    <p class="pixel eyebrow">最終目標</p>
+                    <h2>神祕商人在等你</h2>
+                    <p class="copy">五張卡都到手，就去找戴紫色帽子的商人換禮物。至於他在哪裡？黑喵喵只說了一句：「你自己找吧」。</p>
+                    <a class="button" href="https://town.hackersir.org/">出發找商人 ▶</a>
+                </div>
+                <div class="sprite" style="--x:2880;--y:1264;--w:256;--h:240" role="img" aria-label="戴紫色帽子的商人站在雪地帳篷與傳送門旁"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="wrap">
+            <p>主辦：<a href="https://hackersir.org/">逢甲大學黑客社</a> · 平台：<a href="https://workadventu.re/">WorkAdventure</a> · <a href="https://github.com/HackerSir/2023-workadventure-map">原始碼</a></p>
+            <p>地圖：<a href="https://0xian.dev">Ian</a> &amp; <a href="https://github.com/henryauyong">Henryauyong</a>（CC-BY-SA 3.0）· 字型：<a href="https://github.com/ACh-K/Cubic-11">俐方體 11 號</a>（OFL）</p>
+        </div>
+    </footer>
+
+    <script>
+        (() => {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                return;
+            }
+
+            // The cat's line types itself out; the full sentence stays in the markup without JS.
+            const line = document.getElementById('catLine');
+            const chars = Array.from(line.textContent);
+            line.setAttribute('aria-label', line.textContent);
+            line.style.minHeight = line.offsetHeight + 'px';
+            line.textContent = '';
+            let typed = 0;
+            const typing = setInterval(() => {
+                line.textContent += chars[typed++];
+                if (typed === chars.length) clearInterval(typing);
+            }, 55);
+
+            // Chunky snowfall, drawn on a low-res grid so it matches the map's pixels.
+            const canvas = document.getElementById('snow');
+            const ctx = canvas.getContext('2d');
+            const PIXEL = 4;
+            let flakes = [];
+
+            const resize = () => {
+                canvas.width = Math.ceil(canvas.clientWidth / PIXEL);
+                canvas.height = Math.ceil(canvas.clientHeight / PIXEL);
+                flakes = Array.from({ length: Math.ceil(canvas.width * canvas.height / 500) }, () => ({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    speed: 0.06 + Math.random() * 0.14,
+                    phase: Math.random() * Math.PI * 2,
+                }));
+            };
+
+            const draw = time => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                for (const flake of flakes) {
+                    flake.y += flake.speed;
+                    if (flake.y > canvas.height) flake.y = -1;
+                    const x = (flake.x + Math.sin(time / 1400 + flake.phase) * 4 + canvas.width) % canvas.width;
+                    ctx.fillRect(Math.round(x), Math.round(flake.y), 1, 1);
+                }
+                requestAnimationFrame(draw);
+            };
+
+            window.addEventListener('resize', resize);
+            resize();
+            requestAnimationFrame(draw);
+        })();
+    </script>
+</body>
+
+</html>

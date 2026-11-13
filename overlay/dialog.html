@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>NPC 對話</title>
+    
+    <script src="https://play.workadventu.re/iframe_api.js"></script>
+    <style>
+        body {
+            padding: 12px;
+        }
+
+        .box {
+            display: flex;
+            gap: 14px;
+            min-height: 112px;
+            padding: 12px 16px 12px 12px;
+            background: var(--ice-2);
+            color: var(--ink);
+            box-shadow: 0 0 0 3px var(--ink), 0 0 0 6px var(--snow), 0 0 0 9px var(--ink);
+        }
+
+        .portrait {
+            flex: none;
+            width: 76px;
+            height: 88px;
+            background-color: var(--ice);
+            background-position: center bottom 4px;
+            background-repeat: no-repeat;
+            image-rendering: pixelated;
+        }
+
+        .portrait[hidden] {
+            display: none;
+        }
+
+        .content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .name {
+            color: var(--red);
+            font-size: 14px;
+            line-height: 1.3;
+        }
+
+        .text {
+            min-height: 44px;
+            margin-top: 4px;
+            font-size: 16px;
+            line-height: 1.45;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .options button {
+            padding: 4px 10px 5px;
+            border: 0;
+            background: var(--ink);
+            color: var(--gold);
+            font-size: 14px;
+        }
+
+        .options button:hover {
+            background: var(--red);
+            color: var(--snow);
+        }
+    </style>
+  <link rel="stylesheet" href="../assets/overlay-275fcd56.css">
+</head>
+
+<body>
+    <div class="box" id="box">
+        <div class="portrait" id="portrait"></div>
+        <div class="content">
+            <div class="name" id="name"></div>
+            <div class="text" id="text"></div>
+            <div class="options" id="options"></div>
+        </div>
+    </div>
+
+    <script>
+        const nodes = Object.fromEntries(['portrait', 'name', 'text', 'options'].map(id => [id, document.getElementById(id)]));
+        let typing;
+
+        const showOptions = line => {
+            nodes.options.replaceChildren(...line.options.map(option => {
+                const button = document.createElement('button');
+                button.textContent = option.label;
+                button.addEventListener('click', () => {
+                    WA.player.state.saveVariable('hsPick', { seq: line.seq, id: option.id }, { public: false, persist: false, scope: 'room' });
+                });
+                return button;
+            }));
+        };
+
+        const render = line => {
+            clearInterval(typing);
+            nodes.options.replaceChildren();
+            if (!line) {
+                return;
+            }
+
+            nodes.name.textContent = line.name;
+            nodes.portrait.hidden = !line.portrait;
+            if (line.portrait) {
+                const image = new Image();
+                image.onload = () => {
+                    // Whole-number scaling keeps sprites crisp.
+                    const scale = Math.max(1, Math.floor(Math.min(76 / image.width, 88 / image.height)));
+                    nodes.portrait.style.backgroundImage = `url("${line.portrait}")`;
+                    nodes.portrait.style.backgroundSize = `${image.width * scale}px auto`;
+                };
+                image.src = line.portrait;
+            }
+
+            const chars = Array.from(line.text);
+            let shown = 0;
+            nodes.text.textContent = '';
+            typing = setInterval(() => {
+                nodes.text.textContent += chars[shown++];
+                if (shown >= chars.length) {
+                    clearInterval(typing);
+                    showOptions(line);
+                }
+            }, 28);
+
+            // Clicking the box skips the typing.
+            document.getElementById('box').onclick = () => {
+                if (shown < chars.length) {
+                    clearInterval(typing);
+                    shown = chars.length;
+                    nodes.text.textContent = line.text;
+                    showOptions(line);
+                }
+            };
+        };
+
+        WA.onInit().then(() => {
+            render(WA.player.state.loadVariable('hsDialog'));
+            WA.player.state.onVariableChange('hsDialog').subscribe(render);
+        });
+    </script>
+</body>
+
+</html>

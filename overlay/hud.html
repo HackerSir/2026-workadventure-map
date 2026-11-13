@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>小鎮狀態</title>
+    
+    <script src="https://play.workadventu.re/iframe_api.js"></script>
+    <style>
+        body {
+            padding: 6px;
+        }
+
+        .panel {
+            width: fit-content;
+            padding: 8px 10px;
+            background: var(--ink);
+            color: var(--snow);
+            box-shadow: 0 0 0 3px var(--snow), 0 0 0 6px var(--ink);
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cards {
+            display: flex;
+            gap: 4px;
+        }
+
+        .card {
+            width: 20px;
+            height: 26px;
+            background: #33466f;
+            box-shadow: inset 0 0 0 2px #51668f;
+        }
+
+        .card.on {
+            background: var(--gold);
+            box-shadow: inset 0 0 0 2px #fff3c9;
+            animation: flip 400ms steps(4);
+        }
+
+        @keyframes flip {
+            from { transform: scaleX(0); }
+            to { transform: scaleX(1); }
+        }
+
+        .count {
+            font-size: 14px;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .count b {
+            color: var(--gold);
+            font-weight: 400;
+        }
+
+        .mute {
+            padding: 2px 5px;
+            border: 0;
+            background: transparent;
+            color: var(--snow);
+            font-size: 16px;
+        }
+
+        .objective {
+            width: fit-content;
+            margin-top: 8px;
+            padding: 4px 10px 5px;
+            background: var(--red);
+            color: var(--snow);
+            font-size: 14px;
+            line-height: 1.3;
+        }
+
+        .objective:empty {
+            display: none;
+        }
+
+        .feed {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 10px;
+        }
+
+        .feed div {
+            width: fit-content;
+            max-width: 300px;
+            padding: 3px 8px 4px;
+            background: rgb(20 33 63 / .88);
+            color: var(--snow);
+            font-size: 13px;
+            line-height: 1.35;
+            animation: slide 180ms steps(3);
+        }
+
+        @keyframes slide {
+            from { transform: translateX(-16px); opacity: 0; }
+            to { transform: none; opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .card.on, .feed div { animation: none; }
+        }
+    </style>
+  <link rel="stylesheet" href="../assets/overlay-275fcd56.css">
+</head>
+
+<body>
+    <div class="panel row">
+        <div class="cards" id="cards" role="img"></div>
+        <div class="count">鎮上 <b id="online">1</b> 人</div>
+        <button class="mute" id="mute" type="button"></button>
+    </div>
+    <div class="objective" id="objective" aria-live="polite"></div>
+    <div class="feed" id="feed" aria-live="polite"></div>
+
+    <script>
+        const cardsNode = document.getElementById('cards');
+        const feedNode = document.getElementById('feed');
+        const muteNode = document.getElementById('mute');
+        const shownFeed = new Map();
+
+        const render = hud => {
+            if (!hud) return;
+
+            const owned = hud.cards.length;
+            const QUEST_COUNT = hud.total || 5;
+            cardsNode.setAttribute('aria-label', `已集 ${owned} / ${QUEST_COUNT} 張卡`);
+            cardsNode.replaceChildren(...Array.from({ length: QUEST_COUNT }, (_, i) => {
+                const card = document.createElement('div');
+                card.className = i < owned ? 'card on' : 'card';
+                if (i < owned - 1 || cardsNode.dataset.owned === String(owned)) card.style.animation = 'none';
+                return card;
+            }));
+            cardsNode.dataset.owned = String(owned);
+
+            document.getElementById('online').textContent = hud.online;
+            document.getElementById('objective').textContent = hud.objective || '';
+            muteNode.textContent = hud.muted ? '🔇' : '🔊';
+            muteNode.setAttribute('aria-label', hud.muted ? '開啟聲音' : '關閉聲音');
+
+            // Keep existing nodes, so only new messages animate.
+            const wanted = new Set(hud.feed.map(item => item.id));
+            for (const [id, node] of shownFeed) {
+                if (!wanted.has(id)) {
+                    node.remove();
+                    shownFeed.delete(id);
+                }
+            }
+            for (const item of hud.feed) {
+                if (!shownFeed.has(item.id)) {
+                    const node = document.createElement('div');
+                    node.textContent = item.text;
+                    feedNode.append(node);
+                    shownFeed.set(item.id, node);
+                }
+            }
+        };
+
+        WA.onInit().then(() => {
+            render(WA.player.state.loadVariable('hsHud'));
+            WA.player.state.onVariableChange('hsHud').subscribe(render);
+            muteNode.addEventListener('click', () => {
+                WA.player.state.saveVariable('hsHudCommand', { action: 'toggleMute', at: Date.now() }, { public: false, persist: false, scope: 'room' });
+            });
+        });
+    </script>
+</body>
+
+</html>
