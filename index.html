@@ -462,7 +462,7 @@
             <p class="pixel eyebrow">資安週限定 2D 冒險</p>
             <h1>黑客社<br>資安週 RPG</h1>
             <p class="lede">走進下著雪的小鎮，闖過五道關卡，再找到戴紫色帽子的神祕商人換禮物。不用安裝，打開瀏覽器就能玩。</p>
-            <a class="button" href="https://town.hackersir.org/">進入小鎮 ▶</a>
+            <a class="button" href="https://play.workadventu.re/_/hackersir/hackersir.org/2026-workadventure-map/map.tmj" data-enter>進入小鎮 ▶</a>
         </div>
 
         <div class="wrap">
@@ -547,7 +547,7 @@
                     <p class="pixel eyebrow">最終目標</p>
                     <h2>神祕商人在等你</h2>
                     <p class="copy">五張卡都到手，就去找戴紫色帽子的商人換禮物。至於他在哪裡？黑喵喵只說了一句：「你自己找吧」。</p>
-                    <a class="button" href="https://town.hackersir.org/">出發找商人 ▶</a>
+                    <a class="button" href="https://play.workadventu.re/_/hackersir/hackersir.org/2026-workadventure-map/map.tmj" data-enter>出發找商人 ▶</a>
                 </div>
                 <div class="sprite" style="--x:2880;--y:1264;--w:256;--h:240" role="img" aria-label="戴紫色帽子的商人站在雪地帳篷與傳送門旁"></div>
             </div>
@@ -562,6 +562,16 @@
     </footer>
 
     <script>
+        // The enter buttons open this deployment's own map, wherever the page is hosted. The
+        // fixed instance name puts every player in the same shared world.
+        (() => {
+            const folder = location.pathname.replace(/[^/]*$/, '');
+            const map = `https://play.workadventu.re/_/hackersir/${location.host}${folder}map.tmj`;
+            if (location.protocol === 'https:') {
+                document.querySelectorAll('[data-enter]').forEach(link => { link.href = map; });
+            }
+        })();
+
         (() => {
             if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
                 return;
