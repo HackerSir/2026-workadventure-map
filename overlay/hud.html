@@ -162,7 +162,34 @@
             }
         };
 
+        // Map scripts run sandboxed without storage, so this page keeps their saved progress.
+        // See src/living/saved.ts.
+        const PREFIX = 'hackersir-town:';
+        const BUS = { public: false, persist: false, scope: 'room' };
+        const readStored = () => {
+            const data = {};
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith(PREFIX)) data[key.slice(PREFIX.length)] = JSON.parse(localStorage.getItem(key));
+                }
+            } catch (error) {
+                console.warn('Cannot read saved progress', error);
+            }
+            return data;
+        };
+
         WA.onInit().then(() => {
+            WA.player.state.onVariableChange('hsLocalWrite').subscribe(write => {
+                if (!write || !write.key) return;
+                try {
+                    localStorage.setItem(PREFIX + write.key, JSON.stringify(write.value));
+                } catch (error) {
+                    console.warn('Cannot save progress', error);
+                }
+            });
+            WA.player.state.saveVariable('hsLocalData', { ...readStored(), at: Date.now() }, BUS);
+
             render(WA.player.state.loadVariable('hsHud'));
             WA.player.state.onVariableChange('hsHud').subscribe(render);
             muteNode.addEventListener('click', () => {

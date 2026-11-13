@@ -1,7 +1,7 @@
 /// <reference types="@workadventure/iframe-api-typings" />
 
 import { loadState } from "../utils";
-import { loadSavedList, save } from "./saved";
+import { loadLocalCopy, loadSavedList, save } from "./saved";
 
 export type Quest = "cardgame" | "sheepwall" | "cryptogame" | "kahoot" | "office";
 
@@ -55,12 +55,15 @@ export const addCard = async (quest: Quest) => {
 };
 
 export const initProgress = async () => {
+  await loadLocalCopy();
   const local = loadSavedList<Quest>("hsCards");
   const server = await loadState();
   const fromServer = ALL_QUESTS.filter(quest => server?.[`${quest}_finished_at`]);
 
   cards = ALL_QUESTS.filter(quest => local.includes(quest) || fromServer.includes(quest));
-  if (cards.length !== local.length) {
+  // Always write back: one copy may hold cards the other is missing, such as cards won before
+  // the HUD started keeping a copy.
+  if (cards.length) {
     await saveCards();
   }
   emit();
